@@ -120,7 +120,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.build-windows.outputs.tag }}
-          name: "7-Zip ${{ needs.build-windows.outputs.tag }}"
+          name: "7zz ${{ needs.build-windows.outputs.tag }}"
           body: |
             This is an automated release. See the official changelog and release notes at:
             **[Official 7-Zip ${{ needs.build-windows.outputs.tag }} Release Page](${{ needs.build-windows.outputs.release_url }})**
