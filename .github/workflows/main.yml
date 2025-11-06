@@ -1,4 +1,4 @@
-name: Release full-featured 7zz standalone binaries
+name: Release 7zz binaries
 
 on:
   schedule:
@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build 7zz.exe for Windows (x64)
-    runs-on: windows-latest
+  get-version-info:
+    name: Get latest 7-Zip version
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.get_info.outputs.tag }}
       release_url: ${{ steps.get_info.outputs.release_url }}
@@ -20,91 +20,90 @@ jobs:
         shell: pwsh
         run: |
           $latest_release = Invoke-RestMethod "https://api.github.com/repos/ip7z/7zip/releases/latest"
-
           $linux_asset = $latest_release.assets | Where-Object { $_.name -like '*-linux-x64.tar.xz' }
-          if ($null -eq $linux_asset) {
-            Write-Error "Could not find the Linux x64 tar.xz asset in the latest release."
-            exit 1
-          }
-
           "tag=$($latest_release.tag_name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "release_url=$($latest_release.html_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "linux_download_url=$($linux_asset.browser_download_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
-          Write-Host "Latest 7-Zip tag is $($latest_release.tag_name)"
-          Write-Host "Latest 7-Zip release URL is $($latest_release.html_url)"
-          Write-Host "Latest 7-Zip Linux asset download URL is $($linux_asset.browser_download_url)"
-
-      - name: Check if release already exists
+      - name: Check if our release already exists
         id: check_release
         shell: pwsh
         run: |
           $tag = "${{ steps.get_info.outputs.tag }}"
           try {
             Invoke-RestMethod "https://api.github.com/repos/${{ github.repository }}/releases/tags/$tag" -Headers @{ Authorization = "Bearer ${{ secrets.GITHUB_TOKEN }}" }
-            Write-Host "Release for tag $tag already exists. Skipping build."
             "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           } catch {
-            Write-Host "Release for tag $tag does not exist. Proceeding with build."
             "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           }
 
-      - name: Setup MSVC developer environment
-        if: steps.check_release.outputs.exists == 'false'
-        uses: TheMrMilchmann/setup-msvc-dev@v4
+  build-windows-x64:
+    name: Build 7zz.exe for Windows (x64)
+    runs-on: windows-latest
+    needs: get-version-info
+    if: needs.get-version-info.outputs.release_exists == 'false'
+    steps:
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: 'x64'
-
-      - name: Clone 7-Zip source code
-        if: steps.check_release.outputs.exists == 'false'
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           repository: 'ip7z/7zip'
-          ref: ${{ steps.get_info.outputs.tag }}
+          ref: '${{ needs.get-version-info.outputs.tag }}'
           path: '7zip-src'
-
-      - name: Compile full-featured 7zz.exe
-        if: steps.check_release.outputs.exists == 'false'
-        shell: cmd
-        run: |
-          cd 7zip-src\CPP\7zip\Bundles\Alone2
-          nmake PLATFORM=x64
-
-      - name: Upload Windows binary as artifact
-        if: steps.check_release.outputs.exists == 'false'
-        uses: actions/upload-artifact@v4
+      - shell: cmd
+        run: 'cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x64'
+      - uses: actions/upload-artifact@v4
         with:
-          name: windows-binary
-          path: 7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe
+          name: 'windows-binary-x64'
+          path: '7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe'
 
-  package-linux:
-    name: Package official 7zzs for Linux (x64)
-    runs-on: ubuntu-latest
-    needs: build-windows
-    if: needs.build-windows.outputs.release_exists == 'false'
+  build-windows-x86:
+    name: Build 7zz.exe for Windows (x86)
+    runs-on: windows-latest
+    needs: get-version-info
+    if: needs.get-version-info.outputs.release_exists == 'false'
     steps:
-      - name: Download, Extract, and Rename 7zzs
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: 'x86'
+      - uses: actions/checkout@v5
+        with:
+          repository: 'ip7z/7zip'
+          ref: '${{ needs.get-version-info.outputs.tag }}'
+          path: '7zip-src'
+      - shell: cmd
+        run: 'cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x86'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'windows-binary-x86'
+          path: '7zip-src/CPP/7zip/Bundles/Alone2/x86/7zz.exe'
+
+  package-linux-x64:
+    name: Package official 7zz & 7zzs for Linux (x64)
+    runs-on: ubuntu-latest
+    needs: get-version-info
+    if: needs.get-version-info.outputs.release_exists == 'false'
+    steps:
+      - name: Download and Extract Linux binaries
         shell: bash
         run: |
-          DOWNLOAD_URL="${{ needs.build-windows.outputs.linux_download_url }}"
-          echo "Downloading from GitHub Release: $DOWNLOAD_URL"
+          DOWNLOAD_URL="${{ needs.get-version-info.outputs.linux_download_url }}"
           wget --quiet -O 7z-linux.tar.xz "$DOWNLOAD_URL"
           tar -xf 7z-linux.tar.xz
-          ls -l
-          mv 7zzs 7zz
-          ls -l
 
-      - name: Upload Linux binary as artifact
+      - name: Upload Linux binaries as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-binary
-          path: ./7zz
+          name: linux-binaries-x64
+          path: |
+            7zz
+            7zzs
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-windows, package-linux]
-    if: needs.build-windows.outputs.release_exists == 'false'
+    needs: [get-version-info, build-windows-x64, build-windows-x86, package-linux-x64]
+    if: needs.get-version-info.outputs.release_exists == 'false'
     permissions:
       contents: write
     steps:
@@ -113,18 +112,24 @@ jobs:
         with:
           path: artifacts
 
-      - name: List downloaded files
-        run: ls -R artifacts
+      - name: Prepare and Rename Assets for Release
+        run: |
+          mkdir release-assets
+          mv artifacts/windows-binary-x64/7zz.exe release-assets/7zz-win-x64.exe
+          mv artifacts/windows-binary-x86/7zz.exe release-assets/7zz-win-x86.exe
+          mv artifacts/linux-binaries-x64/7zz release-assets/7zz-linux-x64
+          mv artifacts/linux-binaries-x64/7zzs release-assets/7zzs-linux-x64
+
+          echo "Assets prepared for release:"
+          ls -l release-assets
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.build-windows.outputs.tag }}
-          name: "7zz ${{ needs.build-windows.outputs.tag }}"
+          tag_name: ${{ needs.get-version-info.outputs.tag }}
+          name: "7zz ${{ needs.get-version-info.outputs.tag }}"
           body: |
             This is an automated release. See the official changelog and release notes at:
-            **[Official 7-Zip ${{ needs.build-windows.outputs.tag }} Release Page](${{ needs.build-windows.outputs.release_url }})**
-          files: |
-            artifacts/windows-binary/7zz.exe
-            artifacts/linux-binary/7zz
+            **[Official 7-Zip ${{ needs.get-version-info.outputs.tag }} Release Page](${{ needs.get-version-info.outputs.release_url }})**
+          files: release-assets/*
           token: ${{ secrets.GITHUB_TOKEN }}
