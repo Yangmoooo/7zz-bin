@@ -27,9 +27,9 @@ jobs:
             exit 1
           }
 
-          "$tag=$($latest_release.tag_name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "$release_url=$($latest_release.html_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "$linux_download_url=$($linux_asset.browser_download_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag=$($latest_release.tag_name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "release_url=$($latest_release.html_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "linux_download_url=$($linux_asset.browser_download_url)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
           Write-Host "Latest 7-Zip tag is $($latest_release.tag_name)"
           Write-Host "Latest 7-Zip release URL is $($latest_release.html_url)"
@@ -89,7 +89,7 @@ jobs:
           DOWNLOAD_URL="${{ needs.build-windows.outputs.linux_download_url }}"
           echo "Downloading from GitHub Release: $DOWNLOAD_URL"
           wget --quiet -O 7z-linux.tar.xz "$DOWNLOAD_URL"
-          tar -xf 7z-linux-x64.tar.xz
+          tar -xf 7z-linux.tar.xz
           ls -l
           mv 7zzs 7zz
           ls -l
