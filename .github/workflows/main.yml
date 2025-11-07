@@ -2,7 +2,7 @@ name: Release 7zz binaries
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '38 2 * * *'
   workflow_dispatch:
 
 jobs:
