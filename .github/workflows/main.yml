@@ -107,6 +107,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
       - name: Download all artifacts
         uses: actions/download-artifact@v5
         with:
@@ -115,10 +118,13 @@ jobs:
       - name: Prepare and Rename Assets for Release
         run: |
           mkdir release-assets
+
           mv artifacts/windows-binary-x64/7zz.exe release-assets/7zz-win-x64.exe
           mv artifacts/windows-binary-x86/7zz.exe release-assets/7zz-win-x86.exe
           mv artifacts/linux-binaries-x64/7zz release-assets/7zz-linux-x64
           mv artifacts/linux-binaries-x64/7zzs release-assets/7zzs-linux-x64
+
+          zip -r release-assets/7zip-licenses.zip 7zip-licenses
 
           echo "Assets prepared for release:"
           ls -l release-assets
