@@ -57,12 +57,16 @@ jobs:
           mkdir 7zip-doc
           cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt 7zip-doc/
           cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt 7zip-doc/
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          mkdir asset
+          cp 7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe asset/
+          cp -r 7zip-doc/ asset/
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x64
-          path: |
-            7zip-doc/
-            7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe
+          path: asset/
 
   build-windows-x86:
     name: Build 7zz.exe for Windows (x86)
@@ -85,12 +89,17 @@ jobs:
           mkdir 7zip-doc
           cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt 7zip-doc/
           cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt 7zip-doc/
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          mkdir asset
+          cp 7zip-src/CPP/7zip/Bundles/Alone2/x86/7zz.exe asset/
+          cp -r 7zip-doc/ asset/
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x86
-          path: |
-            7zip-doc/
-            7zip-src/CPP/7zip/Bundles/Alone2/x86/7zz.exe
+          path: asset/
+
 
   package-linux-x64:
     name: Package official 7zz & 7zzs for Linux (x64)
@@ -104,18 +113,15 @@ jobs:
           DOWNLOAD_URL="${{ needs.get-version-info.outputs.linux_download_url }}"
           wget --quiet -O 7z-linux-x64.tar.xz "$DOWNLOAD_URL"
 
-          mkdir 7zip-doc
-          tar -xf 7z-linux-x64.tar.xz -C 7zip-doc
-          mv 7zip-doc/7zz* .
+          mkdir -p asset/7zip-doc/
+          tar -xf 7z-linux-x64.tar.xz -C asset/7zip-doc/
+          mv asset/7zip-doc/7zz* asset/
 
       - name: Upload Linux binaries as artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-x64
-          path: |
-            7zip-doc/
-            7zz
-            7zzs
+          path: asset/
 
   create-release:
     name: Create GitHub Release
@@ -134,9 +140,9 @@ jobs:
         run: |
           mkdir release-assets
 
-          zip -r release-assets/7zz-windows-x64.zip artifacts/windows-x64/
-          zip -r release-assets/7zz-windows-x86.zip artifacts/windows-x86/
-          tar caf release-assets/7zz-linux-x64.tar.xz artifacts/linux-x64/
+          (cd artifacts/windows-x64/asset/ && zip -r ../../../release-assets/7zz-windows-x64.zip ./*)
+          (cd artifacts/windows-x86/asset/ && zip -r ../../../release-assets/7zz-windows-x86.zip ./*)
+          (cd artifacts/linux-x64/asset/ && tar caf ../../../release-assets/7zz-linux-x64.tar.xz ./*)
 
           echo "Assets prepared for release:"
           ls -l release-assets
