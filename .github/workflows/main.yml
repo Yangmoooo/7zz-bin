@@ -55,8 +55,8 @@ jobs:
       - shell: pwsh
         run: |
           mkdir 7zip-doc
-          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt , 7zip-doc
-          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt , 7zip-doc
+          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt 7zip-doc/
+          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt 7zip-doc/
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x64
@@ -83,8 +83,8 @@ jobs:
       - shell: pwsh
         run: |
           mkdir 7zip-doc
-          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt , 7zip-doc
-          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt , 7zip-doc
+          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt 7zip-doc/
+          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt 7zip-doc/
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x86
@@ -125,9 +125,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
       - name: Download all artifacts
         uses: actions/download-artifact@v5
         with:
