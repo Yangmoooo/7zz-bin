@@ -44,18 +44,25 @@ jobs:
     steps:
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
-          arch: 'x64'
+          arch: x64
       - uses: actions/checkout@v5
         with:
-          repository: 'ip7z/7zip'
-          ref: '${{ needs.get-version-info.outputs.tag }}'
-          path: '7zip-src'
-      - shell: cmd
-        run: 'cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x64'
+          repository: ip7z/7zip
+          ref: ${{ needs.get-version-info.outputs.tag }}
+          path: 7zip-src
+      - shell: pwsh
+        run: cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x64
+      - shell: pwsh
+        run: |
+          mkdir 7zip-doc
+          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt , 7zip-doc
+          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt , 7zip-doc
       - uses: actions/upload-artifact@v4
         with:
-          name: 'windows-binary-x64'
-          path: '7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe'
+          name: windows-x64
+          path: |
+            7zip-doc/
+            7zip-src/CPP/7zip/Bundles/Alone2/x64/7zz.exe
 
   build-windows-x86:
     name: Build 7zz.exe for Windows (x86)
@@ -65,18 +72,25 @@ jobs:
     steps:
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
-          arch: 'x86'
+          arch: x86
       - uses: actions/checkout@v5
         with:
-          repository: 'ip7z/7zip'
-          ref: '${{ needs.get-version-info.outputs.tag }}'
-          path: '7zip-src'
-      - shell: cmd
-        run: 'cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x86'
+          repository: ip7z/7zip
+          ref: ${{ needs.get-version-info.outputs.tag }}
+          path: 7zip-src
+      - shell: pwsh
+        run: cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=x86
+      - shell: pwsh
+        run: |
+          mkdir 7zip-doc
+          cp 7zip-src/DOC/*License.txt , 7zip-src/DOC/copying.txt , 7zip-doc
+          cp 7zip-src/DOC/readme.txt , 7zip-src/DOC/src-history.txt , 7zip-doc
       - uses: actions/upload-artifact@v4
         with:
-          name: 'windows-binary-x86'
-          path: '7zip-src/CPP/7zip/Bundles/Alone2/x86/7zz.exe'
+          name: windows-x86
+          path: |
+            7zip-doc/
+            7zip-src/CPP/7zip/Bundles/Alone2/x86/7zz.exe
 
   package-linux-x64:
     name: Package official 7zz & 7zzs for Linux (x64)
@@ -84,18 +98,22 @@ jobs:
     needs: get-version-info
     if: needs.get-version-info.outputs.release_exists == 'false'
     steps:
-      - name: Download and Extract Linux binaries
+      - name: Download and Extract
         shell: bash
         run: |
           DOWNLOAD_URL="${{ needs.get-version-info.outputs.linux_download_url }}"
-          wget --quiet -O 7z-linux.tar.xz "$DOWNLOAD_URL"
-          tar -xf 7z-linux.tar.xz
+          wget --quiet -O 7z-linux-x64.tar.xz "$DOWNLOAD_URL"
+
+          mkdir 7zip-doc
+          tar -xf 7z-linux-64.tar.xz -C 7zip-doc
+          mv 7zip-doc/7zz* .
 
       - name: Upload Linux binaries as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-binaries-x64
+          name: linux-x64
           path: |
+            7zip-doc/
             7zz
             7zzs
 
@@ -119,12 +137,9 @@ jobs:
         run: |
           mkdir release-assets
 
-          mv artifacts/windows-binary-x64/7zz.exe release-assets/7zz-win-x64.exe
-          mv artifacts/windows-binary-x86/7zz.exe release-assets/7zz-win-x86.exe
-          mv artifacts/linux-binaries-x64/7zz release-assets/7zz-linux-x64
-          mv artifacts/linux-binaries-x64/7zzs release-assets/7zzs-linux-x64
-
-          zip -r release-assets/7zip-licenses.zip 7zip-licenses
+          zip -r release-assets/7zz-windows-x64.zip artifacts/windows-x64/
+          zip -r release-assets/7zz-windows-x86.zip artifacts/windows-x86/
+          tar caf release-assets/7zz-linux-x64.tar.xz artifacts/linux-x64/
 
           echo "Assets prepared for release:"
           ls -l release-assets
