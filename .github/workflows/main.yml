@@ -140,9 +140,9 @@ jobs:
         run: |
           mkdir release-assets
 
-          (cd artifacts/windows-x64/asset/ && zip -r ../../../release-assets/7zz-windows-x64.zip ./*)
-          (cd artifacts/windows-x86/asset/ && zip -r ../../../release-assets/7zz-windows-x86.zip ./*)
-          (cd artifacts/linux-x64/asset/ && tar caf ../../../release-assets/7zz-linux-x64.tar.xz ./*)
+          (cd artifacts/windows-x64/ && zip -r ../../release-assets/7zz-windows-x64.zip ./*)
+          (cd artifacts/windows-x86/ && zip -r ../../release-assets/7zz-windows-x86.zip ./*)
+          (cd artifacts/linux-x64/ && tar caf ../../release-assets/7zz-linux-x64.tar.xz ./*)
 
           echo "Assets prepared for release:"
           ls -l release-assets
