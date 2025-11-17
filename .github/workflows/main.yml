@@ -105,7 +105,7 @@ jobs:
           wget --quiet -O 7z-linux-x64.tar.xz "$DOWNLOAD_URL"
 
           mkdir 7zip-doc
-          tar -xf 7z-linux-64.tar.xz -C 7zip-doc
+          tar -xf 7z-linux-x64.tar.xz -C 7zip-doc
           mv 7zip-doc/7zz* .
 
       - name: Upload Linux binaries as artifact
