@@ -142,6 +142,7 @@ jobs:
 
           (cd artifacts/windows-x64/ && zip -r ../../release-assets/7zz-windows-x64.zip ./*)
           (cd artifacts/windows-x86/ && zip -r ../../release-assets/7zz-windows-x86.zip ./*)
+          chmod +x artifacts/linux-x64/7zz*
           (cd artifacts/linux-x64/ && tar caf ../../release-assets/7zz-linux-x64.tar.xz ./*)
 
           echo "Assets prepared for release:"
