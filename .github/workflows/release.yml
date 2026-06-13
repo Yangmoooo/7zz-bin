@@ -76,7 +76,7 @@ jobs:
           cp 7zip-src/CPP/7zip/Bundles/Format7zF/${{ matrix.arch }}/7z.dll asset/
           cp -r 7zip-doc/ asset/
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-${{ matrix.arch }}
           path: asset/
@@ -106,7 +106,7 @@ jobs:
           mv asset/7zip-doc/7zz* asset/
 
       - name: Upload Linux binaries as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
           path: asset/
@@ -145,7 +145,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -169,7 +169,7 @@ jobs:
           ls -l release-assets
 
       - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.get-version-info.outputs.tag }}
           name: "7zz ${{ needs.get-version-info.outputs.tag }}"
