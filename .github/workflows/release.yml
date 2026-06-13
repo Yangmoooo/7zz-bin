@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, x86]
+        arch: [x64]
     steps:
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
@@ -60,6 +60,10 @@ jobs:
         shell: pwsh
         run: cd 7zip-src\CPP\7zip\Bundles\Alone2 && nmake PLATFORM=${{ matrix.arch }}
 
+      - name: Build 7z.dll
+        shell: pwsh
+        run: cd 7zip-src\CPP\7zip\Bundles\Format7zF && nmake PLATFORM=${{ matrix.arch }}
+
       - name: Prepare artifact files
         shell: pwsh
         run: |
@@ -69,6 +73,7 @@ jobs:
 
           mkdir asset
           cp 7zip-src/CPP/7zip/Bundles/Alone2/${{ matrix.arch }}/7zz.exe asset/
+          cp 7zip-src/CPP/7zip/Bundles/Format7zF/${{ matrix.arch }}/7z.dll asset/
           cp -r 7zip-doc/ asset/
 
       - uses: actions/upload-artifact@v6
@@ -84,7 +89,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, x86]
+        arch: [x64]
     steps:
       - name: Download and Extract
         shell: bash
