@@ -39,3 +39,7 @@ git clone https://github.com/ip7z/7zip.git
 cd 7zip/CPP/7zip/Bundles/Alone2
 make -j -f ../../cmpl_gcc_x64.mak
 ```
+
+## 7zz for macOS
+
+A universal `7zz` binary for `x86_64` and `arm64` is provided by the official website. The macOS package does not include `7zzs`.
