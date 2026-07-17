@@ -111,10 +111,35 @@ jobs:
           name: linux-${{ matrix.arch }}
           path: asset/
 
+  package-macos:
+    name: Package macOS (universal)
+    runs-on: ubuntu-latest
+    needs: get-version-info
+    if: needs.get-version-info.outputs.release_exists == 'false'
+    steps:
+      - name: Download and Extract
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.get-version-info.outputs.tag }}"
+
+          gh release download "$TAG" -R ip7z/7zip -p "*-mac.tar.xz" --skip-existing
+
+          mkdir -p asset/7zip-doc/
+          tar -xf *-mac.tar.xz -C asset/7zip-doc/
+          mv asset/7zip-doc/7zz asset/
+
+      - name: Upload macOS binary as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-universal
+          path: asset/
+
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [get-version-info, build-windows, package-linux]
+    needs: [get-version-info, build-windows, package-linux, package-macos]
     if: needs.get-version-info.outputs.release_exists == 'false'
     permissions:
       contents: write
@@ -134,7 +159,7 @@ jobs:
 
             if [[ "$dirname" == *"windows"* ]]; then
               (cd "$dir" && zip -r "../../release-assets/7zz-$dirname.zip" ./*)
-            elif [[ "$dirname" == *"linux"* ]]; then
+            elif [[ "$dirname" == *"linux"* || "$dirname" == *"macos"* ]]; then
               chmod +x "$dir"/7zz*
               (cd "$dir" && tar caf "../../release-assets/7zz-$dirname.tar.xz" ./*)
             fi
