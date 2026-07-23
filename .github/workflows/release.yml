@@ -30,7 +30,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ steps.get_info.outputs.tag }}"
-          if gh release view "$TAG" > /dev/null 2>&1; then
+          if gh release view "$TAG" --repo ${{ github.repository }} > /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -50,7 +50,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: ip7z/7zip
           ref: ${{ needs.get-version-info.outputs.tag }}
